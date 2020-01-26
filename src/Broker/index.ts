@@ -12,8 +12,11 @@ interface BrokerAction {
     channel: string
 }
 
+/**
+ * Implementation of the broker interface 
+ */
 class BrokerImpl implements Broker {
-    
+
     private channels: Channels
     private lastBrokerAction?: BrokerAction
     private brokerSubs: ReceiverFunc[]
@@ -23,7 +26,14 @@ class BrokerImpl implements Broker {
         this.brokerSubs = []
     }
 
-
+    /**
+     * Generate a subscription object - containse necessary methods to perform actions on a channel
+     * 1. publish -> Publish a message over a channel
+     * 2. close -> Close a channel
+     * 3. register -> Listen on a channel
+     * 4. unRegister -> Stop listening
+     * @param channel The channel to generate subscription for
+     */
     private genSubscription(channel: string): Subscription {
         const context = this;
         return {
@@ -39,6 +49,14 @@ class BrokerImpl implements Broker {
         }
     }
 
+    /**
+     * Close a channel, does the following :
+     * 1. Broadcast all the subscribers that the channel is closed
+     * 2. Check if the channel is private
+     *      2.1 If the channel is private do nothing and exit
+     *      2.2 If the channel is not private publish a broker update that the broker deleted a channel
+     * @param channel The channel to be closed
+     */
     private closeChannel(channel: string) {
         
         this.broadcast({
@@ -67,6 +85,11 @@ class BrokerImpl implements Broker {
         }
     }
 
+    /**
+     * Get the next state from the publisher and broadcast it over the channel
+     * @param channel Channel to broadcast over
+     * @param message Message for getting next state
+     */
     private async publisherHandler(channel: string, message: PublishMessage) {
         const { publisher } = this.channels[channel]
         const out = publisher(message)
@@ -79,6 +102,15 @@ class BrokerImpl implements Broker {
         }, channel)
     }
 
+    /**
+     * Handle a subscriptions event for a channel
+     * 
+     * When a subscriber subscribes to a channel
+     * it gets the channels last broadcast so that it can keep up with other subscribers
+     * 
+     * @param channel channel to subscribe to
+     * @param receiverFunc function to call on channel update
+     */
     private subscriptionHandler(channel: string, receiverFunc: ReceiverFunc) {
         this.channels[channel].listeners.push(receiverFunc)
         receiverFunc({
@@ -89,6 +121,12 @@ class BrokerImpl implements Broker {
         }, receiverFunc)
     }
 
+    /**
+     * A function used to broadcast a message either over a channel or over all channels
+     * 
+     * @param message message to broadcast 
+     * @param channel [Optional] if specified - its the channel to broadcast over if not broadcasts over all channels
+     */
     private async broadcast(message: ReceiveMessage, channel?: string) {
         if (!channel) {
             Object.keys(this.channels).forEach(key => {
@@ -193,6 +231,9 @@ class BrokerImpl implements Broker {
     
 }
 
+/**
+ * Break down class into functional constructs for simplicity and maintaining a singleton for Broker
+ */
 function functional() {
     const broker = new BrokerImpl()
     const sub = (channel: string) => {
