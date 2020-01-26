@@ -1,0 +1,16 @@
+{
+  "name": "harmony-js",
+  "version": "1.0.0",
+  "description": "State management with ease",
+  "main": "index.js",
+  "author": "Vatsal Uppal",
+  "license": "MIT",
+  "scripts": {
+    "start": "ts-node ./src/main.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.149",
+    "lodash": "^4.17.15"
+  }
+}
